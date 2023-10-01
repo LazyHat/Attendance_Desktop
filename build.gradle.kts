@@ -3,6 +3,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 val ktor_version: String by project
 val koin_jvm_version: String by project
 val koin_ktor_version: String by project
+val koin_compose_version: String by project
 val zxing_version: String by project
 val zxing_android_version: String by project
 val serialization_version: String by project
@@ -40,7 +41,8 @@ dependencies {
     //Koin
     implementation("io.insert-koin:koin-core-jvm:$koin_jvm_version")
     implementation("io.insert-koin:koin-ktor:$koin_ktor_version")
-    implementation("io.insert-koin:koin-logger-slf4j:$koin_ktor_version")
+    implementation("io.insert-koin:koin-compose:$koin_compose_version")
+    //
     //Zxing
     implementation("com.google.zxing:core:$zxing_version")
 }
