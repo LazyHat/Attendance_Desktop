@@ -23,12 +23,9 @@ interface NetworkSource {
 
 class NetworkSourceImpl(private val client: HttpClient) : NetworkSource {
     override suspend fun logIn(username: String, password: String): String? =
-        client.get("$authority/teacher/login?username=$username&password=$password").let {
-            when (it.status) {
-                HttpStatusCode.OK -> it.bodyAsText()
-                else -> null
-            }
-        }
+        client.get("$authority/teacher/login?username=$username&password=$password").takeIf {
+            it.status == HttpStatusCode.OK
+        }?.bodyAsText()
 
     override suspend fun validateUserToken(token: String): Boolean = client.get("$authority/user/token-info").let {
         when (it.status) {
@@ -69,7 +66,7 @@ class NetworkSourceImpl(private val client: HttpClient) : NetworkSource {
         }
 
     override suspend fun createToken(lessonId: UInt, token: String): LessonToken? =
-        client.get("$authority/teacher/lessons/$lessonId/token"){
+        client.get("$authority/teacher/lessons/$lessonId/token") {
             headers["Authorization"] = "Bearer $token"
         }.let {
             if (it.status == HttpStatusCode.OK)
