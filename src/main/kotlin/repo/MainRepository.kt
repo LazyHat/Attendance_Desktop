@@ -6,6 +6,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import models.Lesson
 import models.LessonCreate
+import models.LessonToken
 import models.Student
 import source.NetworkSource
 import kotlin.time.Duration.Companion.milliseconds
@@ -17,6 +18,7 @@ interface MainRepository {
     suspend fun getLessonById(id: UInt): Lesson?
     suspend fun createLesson(lesson: LessonCreate): Boolean
     suspend fun getStudentsByLesson(lessonId: UInt): Map<String, Set<Student>>
+    suspend fun createToken(lessonId: UInt): LessonToken?
 }
 
 data class Credentials(val username: String, val password: String)
@@ -55,6 +57,9 @@ class MainRepositoryImpl(private val networkSource: NetworkSource) : MainReposit
     override suspend fun createLesson(lesson: LessonCreate): Boolean = networkSource.getTokenInfo(userToken).let {
         networkSource.createLesson(userToken, lesson)
     }
+
     override suspend fun getStudentsByLesson(lessonId: UInt): Map<String, Set<Student>> =
         networkSource.getStudentsWithLesson(lessonId, userToken)
+
+    override suspend fun createToken(lessonId: UInt): LessonToken? = networkSource.createToken(lessonId, userToken)
 }

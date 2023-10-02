@@ -43,7 +43,7 @@ fun QrCodeScreen(lessonId: UInt) {
 
     fun updateToken() {
         scope.launch {
-            tokenInfo = mainRepository.
+            tokenInfo = mainRepository.createToken(lessonId)
         }
     }
 
@@ -111,7 +111,7 @@ fun QrCodeScreen(lessonId: UInt) {
                                 }
                             }
                     }
-                    Text("token expires will expire in $expiresIn")
+                    Text("token will expire in $expiresIn")
                 }
             }
         else {

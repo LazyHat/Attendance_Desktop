@@ -19,7 +19,7 @@ import repo.MainRepository
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun LessonScreen(id: UInt, generateCode: () -> Unit, onBack: () -> Unit) {
+fun LessonScreen(id: UInt, generateCode: (UInt) -> Unit, onBack: () -> Unit) {
     var lesson by remember { mutableStateOf<Lesson?>(null) }
     var students by remember { mutableStateOf<Map<String, Set<Student>>>(mapOf()) }
     val mainRepository = koinInject<MainRepository>()
@@ -58,7 +58,9 @@ fun LessonScreen(id: UInt, generateCode: () -> Unit, onBack: () -> Unit) {
                             Text("Start: ${it.start.time}")
                             Text("End: ${it.end.time}")
                             Text("Groups: ${it.groupsList}")
-                            Button(generateCode) {
+                            Button({
+                                generateCode(it.id)
+                            }) {
                                 Text("Create QR Code")
                             }
                         }

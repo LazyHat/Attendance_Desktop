@@ -45,7 +45,9 @@ fun main() = application {
                     when (it) {
                         Page.LogIn -> LoginScreen { navController.navigateUp() }
                         Page.Main -> MainScreen { navController.navigate(Page.Lesson(it)) }
-                        is Page.Lesson -> LessonScreen(it.id, {}) { navController.navigateUp() }
+                        is Page.Lesson -> LessonScreen(
+                            it.id,
+                            { qrCodeWindowOpened = it }) { navController.navigateUp() }
                     }
                 }
             }
