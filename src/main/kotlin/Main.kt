@@ -54,7 +54,7 @@ fun main() = application {
         }
         qrCodeWindowOpened?.let {
             Window(onCloseRequest = { qrCodeWindowOpened = null }, title = "QR Code") {
-                QrCodeScreen(it)
+                QrCodeScreen(it) { qrCodeWindowOpened = null }
             }
         }
     }

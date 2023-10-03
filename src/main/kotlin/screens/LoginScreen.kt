@@ -18,12 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import repo.MainRepository
-
-enum class LoginStatus {
-    Idle,
-    Loading,
-    Failed
-}
+import ru.lazyhat.models.LoginStatus
 
 @Composable
 fun LoginScreen(onSuccess: () -> Unit) {
@@ -84,7 +79,7 @@ fun LoginScreen(onSuccess: () -> Unit) {
             )
         )
         if (status != LoginStatus.Idle) {
-            Text("status: ${status.name}")
+            Text("status: ${status.description}")
         }
         Button({ logIn() }) {
             Text("Log In")

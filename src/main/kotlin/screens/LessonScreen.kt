@@ -11,11 +11,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import models.Lesson
-import models.Status
-import models.Student
+import kotlinx.datetime.LocalDateTime
+import models.now
+import models.plus
 import org.koin.compose.koinInject
 import repo.MainRepository
+import ru.lazyhat.models.Lesson
+import ru.lazyhat.models.Status
+import ru.lazyhat.models.Student
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -54,15 +57,16 @@ fun LessonScreen(id: UInt, generateCode: (UInt) -> Unit, onBack: () -> Unit) {
                     Card {
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Text(it.title)
-                            Text("Date: ${it.start.date}")
-                            Text("Start: ${it.start.time}")
-                            Text("End: ${it.end.time}")
+                            Text("DOW: ${it.dayOfWeek.name}")
+                            Text("Start: ${it.start}")
+                            Text("End: ${it.start + it.duration}")
                             Text("Groups: ${it.groupsList}")
-                            Button({
-                                generateCode(it.id)
-                            }) {
-                                Text("Create QR Code")
-                            }
+                            if (it.start < LocalDateTime.now().time)
+                                Button({
+                                    generateCode(it.id)
+                                }) {
+                                    Text("Create QR Code")
+                                }
                         }
                     }
                 }

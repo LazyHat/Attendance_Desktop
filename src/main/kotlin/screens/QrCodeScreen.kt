@@ -18,27 +18,29 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
-import kotlinx.coroutines.*
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
-import models.LessonToken
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDateTime
+import models.minus
+import models.now
+import models.roundTo
 import org.koin.compose.koinInject
 import repo.MainRepository
+import ru.lazyhat.models.LessonToken
 import kotlin.math.abs
 import kotlin.math.min
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
 
 @Composable
-fun QrCodeScreen(lessonId: UInt) {
+fun QrCodeScreen(lessonId: UInt, closeWindow: () -> Unit) {
     val mainRepository = koinInject<MainRepository>()
     var tokenInfo by remember { mutableStateOf<LessonToken?>(null) }
-    var expiresIn by remember { mutableStateOf(Duration.ZERO) }
-    var job: Job? by remember { mutableStateOf(null) }
+    var expiresIn by remember { mutableStateOf(ZERO) }
+    val closeVia = expiresIn + 5.seconds
     val scope = rememberCoroutineScope { Dispatchers.IO }
 
     fun updateToken() {
@@ -49,71 +51,62 @@ fun QrCodeScreen(lessonId: UInt) {
 
     LaunchedEffect(tokenInfo) {
         tokenInfo?.let {
-            job?.cancel()
-            job = scope.launch {
-                while (true) {
-                    expiresIn =
-                        (it.expires.toInstant(TimeZone.currentSystemDefault()) - Clock.System.now()).toComponents { days, hours, minutes, seconds, nanoseconds ->
-                            days.days + hours.hours + minutes.minutes + seconds.seconds
-                        }
-                    delay(1.seconds)
-                    if (!isActive)
-                        break
-                }
+            while (true) {
+                expiresIn = (it.expires - LocalDateTime.now()).roundTo(DurationUnit.SECONDS)
+                delay(1.seconds)
+                if (!isActive) break
             }
         }
     }
+
+    if (closeVia < ZERO)
+        closeWindow()
 
     LaunchedEffect(lessonId) {
         updateToken()
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Scan") },
-                actions = {
-                    Button(
-                        {
-                            updateToken()
-                        }
-                    ) {
-                        Text("Refresh QRCode")
-                    }
-                }
-            )
-        }
-    ) {
-        if (tokenInfo != null)
-            tokenInfo?.let {
-                val writer = QRCodeWriter()
-                val bitMatrix = writer.encode(it.id, BarcodeFormat.QR_CODE, 0, 0)
-                val width = bitMatrix.width
-                val height = bitMatrix.height
-                var size by remember { mutableStateOf(IntSize(50, 50)) }
-                val scaleX = size.width / width.toFloat()
-                val scaleY = size.height / height.toFloat()
-                val scale = min(scaleX, scaleY)
-                Column(modifier = Modifier.fillMaxSize().padding(10.dp)) {
+    Scaffold(topBar = {
+        TopAppBar(title = { Text("Scan") }, actions = {
+            Button({
+                updateToken()
+            }) {
+                Text("Refresh QRCode")
+            }
+        })
+    }) {
+        if (tokenInfo != null) tokenInfo?.let {
+            val writer = QRCodeWriter()
+            val bitMatrix = writer.encode(it.id, BarcodeFormat.QR_CODE, 0, 0)
+            val width = bitMatrix.width
+            val height = bitMatrix.height
+            var size by remember { mutableStateOf(IntSize(50, 50)) }
+            val scaleX = size.width / width.toFloat()
+            val scaleY = size.height / height.toFloat()
+            val scale = min(scaleX, scaleY)
+            Column(modifier = Modifier.fillMaxSize().padding(10.dp)) {
+                if (expiresIn > ZERO)
                     Canvas(Modifier.padding(5.dp).fillMaxSize(0.9f).onGloballyPositioned {
                         val minimumDelta = 50
-                        if (abs(size.height - it.size.height) >= minimumDelta || abs(size.width - it.size.width) >= minimumDelta)
-                            size = it.size
+                        if (abs(size.height - it.size.height) >= minimumDelta || abs(size.width - it.size.width) >= minimumDelta) size =
+                            it.size
                     }) {
-                        for (x in 0 until width)
-                            for (y in 0 until height) {
-                                if (bitMatrix[x, y]) {
-                                    drawRect(
-                                        Color.Black,
-                                        Offset(x.toFloat() * scale, y.toFloat() * scale),
-                                        size = Size(scale, scale).times(1.0f)
-                                    )
-                                }
+                        for (x in 0 until width) for (y in 0 until height) {
+                            if (bitMatrix[x, y]) {
+                                drawRect(
+                                    Color.Black,
+                                    Offset(x.toFloat() * scale, y.toFloat() * scale),
+                                    size = Size(scale, scale).times(1.0f)
+                                )
                             }
+                        }
                     }
-                    Text("token will expire in $expiresIn")
-                }
+                Text(
+                    if (expiresIn > ZERO) "token will expire in $expiresIn"
+                    else "Window will automatically closed after $closeVia"
+                )
             }
+        }
         else {
             Text("Loading...", modifier = Modifier.fillMaxSize())
         }

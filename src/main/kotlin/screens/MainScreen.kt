@@ -17,11 +17,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.datetime.*
-import models.Lesson
-import models.LessonCreate
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import models.plus
 import org.koin.compose.koinInject
 import repo.MainRepository
+import ru.lazyhat.models.Lesson
+import ru.lazyhat.models.LessonCreate
+import kotlin.time.Duration.Companion.hours
 
 @Composable
 @Preview
@@ -91,8 +95,9 @@ fun LessonCard(state: Lesson, onClick: () -> Unit) {
             Text("id: " + state.id)
             Text("Title: " + state.title)
             Text("Teacher: " + state.username)
+            Text("DOW: " + state.dayOfWeek)
             Text("start: " + state.start)
-            Text("end: " + state.end)
+            Text("end: " + state.start.plus(state.duration))
             Text("groups: " + state.groupsList)
         }
     }
@@ -105,15 +110,22 @@ fun CreateLessonDialog(onClose: () -> Unit, onCreate: (LessonCreate) -> Unit) {
             var title by remember { mutableStateOf("") }
             val start by remember {
                 mutableStateOf(
-                    Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                    Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
                 )
             }
-            val end by remember { mutableStateOf(start.toJavaLocalDateTime().plusHours(2).toKotlinLocalDateTime()) }
+            val dof by remember {
+                mutableStateOf(
+                    Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).dayOfWeek
+                )
+            }
+            val duration by remember { mutableStateOf(2.hours) }
+            val end = start + duration
             val groups = remember { mutableStateListOf<String>() }
             Text("Create lesson")
             TextField(value = title, onValueChange = { title = it }, label = { Text("title") })
-            Text(text = start.toString())
-            Text(text = end.toString())
+            Text("DOF: ${dof.name}")
+            Text("Start:$start")
+            Text("End: $end")
             LazyColumn {
                 items(groups) {
                     Text(it)
@@ -148,7 +160,7 @@ fun CreateLessonDialog(onClose: () -> Unit, onCreate: (LessonCreate) -> Unit) {
                 }
             }
             Button({
-                onCreate(LessonCreate(title, start, end, groups.toSet()))
+                onCreate(LessonCreate(title, dof, start, duration, groups.toSet()))
                 onClose()
             }) {
                 Text("create lesson")

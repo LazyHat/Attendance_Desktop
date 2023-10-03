@@ -4,10 +4,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import models.Lesson
-import models.LessonCreate
-import models.LessonToken
-import models.Student
+import ru.lazyhat.models.Lesson
+import ru.lazyhat.models.LessonCreate
+import ru.lazyhat.models.LessonToken
+import ru.lazyhat.models.Student
 import source.NetworkSource
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -54,9 +54,8 @@ class MainRepositoryImpl(private val networkSource: NetworkSource) : MainReposit
 
     override suspend fun getLessonById(id: UInt): Lesson? = networkSource.getLessonById(id, userToken)
 
-    override suspend fun createLesson(lesson: LessonCreate): Boolean = networkSource.getTokenInfo(userToken).let {
-        networkSource.createLesson(userToken, lesson)
-    }
+    override suspend fun createLesson(lesson: LessonCreate): Boolean = networkSource.createLesson(userToken, lesson)
+
 
     override suspend fun getStudentsByLesson(lessonId: UInt): Map<String, Set<Student>> =
         networkSource.getStudentsWithLesson(lessonId, userToken)
