@@ -1,48 +1,49 @@
-package screens
+package ui.screens.pages.lessons
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.Dispatchers
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import models.plus
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 import org.koin.compose.koinInject
 import repo.MainRepository
 import ru.lazyhat.models.Lesson
-import ru.lazyhat.models.LessonCreate
+import ru.lazyhat.models.plus
+import java.time.DayOfWeek
+import java.time.format.TextStyle
+import java.util.*
 import kotlin.time.Duration.Companion.hours
 
 @Composable
-@Preview
-fun MainScreen(toLesson: (id: UInt) -> Unit) {
+fun MainScreen(openLesson: (UInt) -> Unit) {
+    val scope = rememberCoroutineScope()
     val mainRepository = koinInject<MainRepository>()
-    val scope = rememberCoroutineScope { Dispatchers.IO }
     val lessons = remember { mutableStateListOf<Lesson>() }
-    var createLessonDialog by remember { mutableStateOf(false) }
-    fun updateLessons() {
+    var refreshing by remember { mutableStateOf(false) }
+
+    fun refreshPage() {
+        refreshing = true
         scope.launch {
+            val result = mainRepository.getLessons()
             lessons.clear()
-            lessons.addAll(mainRepository.getLessons())
+            lessons.addAll(result)
+            refreshing = false
         }
     }
 
     LaunchedEffect(Unit) {
-        updateLessons()
+        refreshPage()
     }
 
     Scaffold(
@@ -51,14 +52,9 @@ fun MainScreen(toLesson: (id: UInt) -> Unit) {
                 title = { Text("Lessons") },
                 actions = {
                     Button(onClick = {
-                        updateLessons()
+                        refreshPage()
                     }) {
-                        Text("Refresh")
-                    }
-                    Button(onClick = {
-                        createLessonDialog = true
-                    }) {
-                        Text("create lesson")
+                        Text(if (refreshing) "Refreshing..." else "Refresh")
                     }
                 }
             )
@@ -70,101 +66,69 @@ fun MainScreen(toLesson: (id: UInt) -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             items(lessons) {
-                LessonCard(it) {
-                    toLesson(it.id)
+                LessonListItem(it) {
+                    openLesson(it.id)
                 }
             }
         }
     }
-    if (createLessonDialog) {
-        CreateLessonDialog({ createLessonDialog = false }) {
-            scope.launch {
-                mainRepository.createLesson(it)
-            }
-        }
+}
+
+@Composable
+@Preview
+fun PreviewLessonListItem() {
+    val lesson =
+        Lesson(1U, "lazy", "English", DayOfWeek.FRIDAY, LocalTime(15, 0), 2U, LocalDate(2023, 10, 5), 5U, setOf("2092"))
+    Column {
+        LessonListItem(lesson, {})
     }
 }
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun LessonCard(state: Lesson, onClick: () -> Unit) {
-    Card(
-        onClick = onClick
-    ) {
-        Column {
-            Text("id: " + state.id)
-            Text("Title: " + state.title)
-            Text("Teacher: " + state.username)
-            Text("DOW: " + state.dayOfWeek)
-            Text("start: " + state.start)
-            Text("end: " + state.start.plus(state.duration))
-            Text("groups: " + state.groupsList)
-        }
-    }
-}
-
-@Composable
-fun CreateLessonDialog(onClose: () -> Unit, onCreate: (LessonCreate) -> Unit) {
-    AlertDialog(onDismissRequest = onClose, {
-        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            var title by remember { mutableStateOf("") }
-            val start by remember {
-                mutableStateOf(
-                    Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
+fun LessonListItem(state: Lesson, onClick: () -> Unit) {
+    ListItem(
+        modifier = Modifier.fillMaxSize().clickable(onClick = onClick),
+        icon = {
+            Text(
+                modifier = Modifier.padding(vertical = 8.dp),
+                text = state.id.toString(),
+                fontSize = 30.sp
+            )
+        },
+        text = {
+            Text(
+                state.title,
+                fontSize = 19.sp,
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.ExtraBold
+            )
+        },
+        secondaryText = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "${
+                        state.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+                    } ${state.startTime}-${state.startTime.plus(state.durationHours.toInt().hours)}\n${
+                        state.groups.joinToString(
+                            ", "
+                        )
+                    }",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
-            val dof by remember {
-                mutableStateOf(
-                    Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).dayOfWeek
-                )
-            }
-            val duration by remember { mutableStateOf(2.hours) }
-            val end = start + duration
-            val groups = remember { mutableStateListOf<String>() }
-            Text("Create lesson")
-            TextField(value = title, onValueChange = { title = it }, label = { Text("title") })
-            Text("DOF: ${dof.name}")
-            Text("Start:$start")
-            Text("End: $end")
-            LazyColumn {
-                items(groups) {
-                    Text(it)
-                }
-                item {
-                    var new by remember { mutableStateOf("") }
-
-                    fun addGroup() {
-                        if (new.isNotEmpty()) {
-                            groups.add(new)
-                            new = ""
-                        }
-                    }
-
-                    TextField(
-                        value = new,
-                        onValueChange = { new = it },
-                        label = { Text("add group") },
-                        trailingIcon = {
-                            Button({
-                                addGroup()
-                            }) {
-                                Text("add")
-                            }
-                        },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = {
-                            addGroup()
-                        })
-                    )
-                }
-            }
-            Button({
-                onCreate(LessonCreate(title, dof, start, duration, groups.toSet()))
-                onClose()
-            }) {
-                Text("create lesson")
+        },
+        trailing = {
+            Column(
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.End
+            ) {
+                Text(state.teacher, fontSize = 18.sp)
             }
         }
-    })
+    )
 }

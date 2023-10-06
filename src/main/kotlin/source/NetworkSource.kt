@@ -18,6 +18,7 @@ interface NetworkSource {
     suspend fun getLessonById(id: UInt, token: String): Lesson?
     suspend fun getStudentsWithLesson(lessonId: UInt, token: String): Map<String, Set<Student>>
     suspend fun createToken(lessonId: UInt, token: String): LessonToken?
+    suspend fun getLessonAttendance(lessonId: UInt, token: String): LessonAttendance?
 }
 
 class NetworkSourceImpl(private val client: HttpClient) : NetworkSource {
@@ -65,4 +66,9 @@ class NetworkSourceImpl(private val client: HttpClient) : NetworkSource {
                 it.body()
             else null
         }
+
+    override suspend fun getLessonAttendance(lessonId: UInt, token: String): LessonAttendance? =
+        client.get("$authority/teacher/lessons/$lessonId/attendance") {
+            bearerAuth(token)
+        }.takeIf { it.status == HttpStatusCode.OK }?.body()
 }

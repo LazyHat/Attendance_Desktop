@@ -1,3 +1,4 @@
+import androidx.compose.animation.Crossfade
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.window.Window
@@ -17,12 +18,12 @@ import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import repo.MainRepository
 import repo.MainRepositoryImpl
-import screens.LessonScreen
 import screens.LoginScreen
-import screens.MainScreen
 import screens.QrCodeScreen
 import source.NetworkSource
 import source.NetworkSourceImpl
+import ui.screens.pages.lessons.LessonCard
+import ui.screens.pages.lessons.MainScreen
 
 
 fun main() = application {
@@ -41,20 +42,20 @@ fun main() = application {
                     }
                 }
 
-                navController.currentPage.let {
+                Crossfade(navController.currentPage) {
                     when (it) {
                         Page.LogIn -> LoginScreen { navController.navigateUp() }
                         Page.Main -> MainScreen { navController.navigate(Page.Lesson(it)) }
-                        is Page.Lesson -> LessonScreen(
-                            it.id,
-                            { qrCodeWindowOpened = it }) { navController.navigateUp() }
+                        is Page.Lesson -> LessonCard(it.id, {
+                            navController.navigateUp()
+                        }, { qrCodeWindowOpened = it })
                     }
                 }
             }
-        }
-        qrCodeWindowOpened?.let {
-            Window(onCloseRequest = { qrCodeWindowOpened = null }, title = "QR Code") {
-                QrCodeScreen(it) { qrCodeWindowOpened = null }
+            qrCodeWindowOpened?.let {
+                Window(onCloseRequest = { qrCodeWindowOpened = null }, title = "QR Code") {
+                    QrCodeScreen(it) { qrCodeWindowOpened = null }
+                }
             }
         }
     }

@@ -23,12 +23,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
-import models.minus
-import models.now
-import models.roundTo
 import org.koin.compose.koinInject
 import repo.MainRepository
 import ru.lazyhat.models.LessonToken
+import ru.lazyhat.models.minus
+import ru.lazyhat.models.now
+import ru.lazyhat.models.roundTo
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.time.Duration.Companion.ZERO

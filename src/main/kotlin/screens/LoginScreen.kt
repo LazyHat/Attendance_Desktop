@@ -16,9 +16,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import models.LoginStatus
 import org.koin.compose.koinInject
 import repo.MainRepository
-import ru.lazyhat.models.LoginStatus
 
 @Composable
 fun LoginScreen(onSuccess: () -> Unit) {
@@ -28,6 +28,7 @@ fun LoginScreen(onSuccess: () -> Unit) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var status by remember { mutableStateOf(LoginStatus.Idle) }
+
 
     fun logIn() {
         scope.launch {

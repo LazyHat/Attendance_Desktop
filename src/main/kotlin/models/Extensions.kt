@@ -1,8 +1,6 @@
-package models
+package ru.lazyhat.models
 
 import kotlinx.datetime.*
-import ru.lazyhat.models.LessonCreate
-import ru.lazyhat.models.LessonUpdate
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -16,7 +14,7 @@ operator fun LocalDateTime.minus(other: LocalDateTime): Duration =
     this.toInstant(TimeZone.currentSystemDefault()) - other.toInstant(TimeZone.currentSystemDefault())
 
 fun LessonCreate.toLessonUpdate(username: String) = LessonUpdate(
-    username, title, dayOfWeek, start, duration, groupsList
+    username, title, dayOfWeek, startTime, durationHours, startDate, durationWeeks, groups
 )
 
 fun LocalDateTime.Companion.now(): LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())

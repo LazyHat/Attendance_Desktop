@@ -4,10 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import ru.lazyhat.models.Lesson
-import ru.lazyhat.models.LessonCreate
-import ru.lazyhat.models.LessonToken
-import ru.lazyhat.models.Student
+import ru.lazyhat.models.*
 import source.NetworkSource
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -19,6 +16,7 @@ interface MainRepository {
     suspend fun createLesson(lesson: LessonCreate): Boolean
     suspend fun getStudentsByLesson(lessonId: UInt): Map<String, Set<Student>>
     suspend fun createToken(lessonId: UInt): LessonToken?
+    suspend fun getLessonAttendance(lessonId: UInt): LessonAttendance?
 }
 
 data class Credentials(val username: String, val password: String)
@@ -61,4 +59,6 @@ class MainRepositoryImpl(private val networkSource: NetworkSource) : MainReposit
         networkSource.getStudentsWithLesson(lessonId, userToken)
 
     override suspend fun createToken(lessonId: UInt): LessonToken? = networkSource.createToken(lessonId, userToken)
+    override suspend fun getLessonAttendance(lessonId: UInt): LessonAttendance? =
+        networkSource.getLessonAttendance(lessonId, userToken)
 }
