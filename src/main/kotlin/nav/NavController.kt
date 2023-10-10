@@ -1,6 +1,11 @@
 package nav
 
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 
 sealed class Page {
     data object Main : Page()
@@ -9,21 +14,24 @@ sealed class Page {
 }
 
 interface NavController {
-    val currentPage: Page
+    @Composable
+    fun collectCurrentPageAsState(): State<Page>
     fun navigateUp()
     fun navigate(page: Page)
 }
 
-class NavControllerInstance(initialPage: Page) : NavController {
-    private val pages = mutableStateListOf(initialPage)
-    override val currentPage: Page
-        get() = pages.last()
+class NavControllerInstance(val initialPage: Page) : NavController {
+    private val pages = MutableStateFlow(listOf(initialPage))
+
+    @Composable
+    override fun collectCurrentPageAsState(): State<Page> = pages.map { it.last() }.collectAsState(initialPage)
 
     override fun navigateUp() {
-        pages.removeLast()
+        pages.update { it.dropLast(1) }
     }
 
     override fun navigate(page: Page) {
-        pages.add(page)
+        pages.update { it + page }
+        pages.value
     }
 }

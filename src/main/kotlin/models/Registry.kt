@@ -2,27 +2,28 @@ package ru.lazyhat.models
 
 import androidx.compose.ui.graphics.Color
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
 
-data class RegistryRecord(
-    val id: ULong,
+@Serializable
+data class RegistryRecordUpdate(
     val lessonId: UInt,
-    val student: String,
-    val createdAt: LocalDateTime
-)
-
-data class RegistryRecordCreate(
-    val lessonId: UInt,
-    val student: String,
-    val createdAt: LocalDateTime
-)
+    val recordsToUpdate: List<Parameters>,
+    val newStatus: AttendanceStatus
+) {
+    @Serializable
+    data class Parameters(
+        val student: String,
+        val date: LocalDate
+    )
+}
 
 @Serializable
 enum class AttendanceStatus(val color: Color) {
     Attended(Color(0xFF00C33C)),
-    Missing(Color.Red)
+    Missing(Color.Red),
+    ValidReason(Color.Gray),
+    Disease(Color.Blue)
 }
 
 @Serializable

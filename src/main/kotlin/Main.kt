@@ -1,3 +1,4 @@
+
 import androidx.compose.animation.Crossfade
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
@@ -34,6 +35,7 @@ fun main() = application {
                 val navController: NavController = remember { NavControllerInstance(Page.Main) }
                 val mainRepository: MainRepository = koinInject()
                 val scope = rememberCoroutineScope { Dispatchers.IO }
+                val currentPage by navController.collectCurrentPageAsState()
 
                 LaunchedEffect(Unit) {
                     scope.launch {
@@ -42,10 +44,12 @@ fun main() = application {
                     }
                 }
 
-                Crossfade(navController.currentPage) {
+                Crossfade(currentPage) {
                     when (it) {
                         Page.LogIn -> LoginScreen { navController.navigateUp() }
-                        Page.Main -> MainScreen { navController.navigate(Page.Lesson(it)) }
+                        Page.Main -> MainScreen {
+                            navController.navigate(Page.Lesson(it))
+                        }
                         is Page.Lesson -> LessonCard(it.id, {
                             navController.navigateUp()
                         }, { qrCodeWindowOpened = it })

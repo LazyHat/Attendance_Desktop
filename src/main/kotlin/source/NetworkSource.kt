@@ -7,9 +7,8 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import ru.lazyhat.models.*
 
-private val authority = "http://localhost:8080"
 //private val authority = "http://lazyhat.ru"
-
+private val authority = "http://192.168.0.103:8080"
 interface NetworkSource {
     suspend fun logIn(username: String, password: String): String?
     suspend fun getLessonsByToken(token: String): List<Lesson>
@@ -19,6 +18,7 @@ interface NetworkSource {
     suspend fun getStudentsWithLesson(lessonId: UInt, token: String): Map<String, Set<Student>>
     suspend fun createToken(lessonId: UInt, token: String): LessonToken?
     suspend fun getLessonAttendance(lessonId: UInt, token: String): LessonAttendance?
+    suspend fun upsertListAttendance(update: RegistryRecordUpdate, token: String): Boolean
 }
 
 class NetworkSourceImpl(private val client: HttpClient) : NetworkSource {
@@ -71,4 +71,11 @@ class NetworkSourceImpl(private val client: HttpClient) : NetworkSource {
         client.get("$authority/teacher/lessons/$lessonId/attendance") {
             bearerAuth(token)
         }.takeIf { it.status == HttpStatusCode.OK }?.body()
+
+    override suspend fun upsertListAttendance(update: RegistryRecordUpdate, token: String): Boolean =
+        client.patch("$authority/teacher/lessons/${update.lessonId}/attendance") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody(update)
+        }.status == HttpStatusCode.OK
 }

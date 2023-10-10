@@ -3,6 +3,7 @@ package repo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import ru.lazyhat.models.*
 import source.NetworkSource
@@ -16,7 +17,8 @@ interface MainRepository {
     suspend fun createLesson(lesson: LessonCreate): Boolean
     suspend fun getStudentsByLesson(lessonId: UInt): Map<String, Set<Student>>
     suspend fun createToken(lessonId: UInt): LessonToken?
-    suspend fun getLessonAttendance(lessonId: UInt): LessonAttendance?
+    suspend fun getLessonAttendance(lessonId: UInt): Flow<LessonAttendance>
+    suspend fun updateAttendance(update: RegistryRecordUpdate): Boolean
 }
 
 data class Credentials(val username: String, val password: String)
@@ -51,14 +53,17 @@ class MainRepositoryImpl(private val networkSource: NetworkSource) : MainReposit
     }
 
     override suspend fun getLessonById(id: UInt): Lesson? = networkSource.getLessonById(id, userToken)
-
     override suspend fun createLesson(lesson: LessonCreate): Boolean = networkSource.createLesson(userToken, lesson)
-
-
     override suspend fun getStudentsByLesson(lessonId: UInt): Map<String, Set<Student>> =
         networkSource.getStudentsWithLesson(lessonId, userToken)
 
     override suspend fun createToken(lessonId: UInt): LessonToken? = networkSource.createToken(lessonId, userToken)
     override suspend fun getLessonAttendance(lessonId: UInt): LessonAttendance? =
         networkSource.getLessonAttendance(lessonId, userToken)
+
+    override suspend fun updateAttendance(update: RegistryRecordUpdate): Boolean =
+        networkSource.upsertListAttendance(
+            update,
+            userToken
+        )
 }
