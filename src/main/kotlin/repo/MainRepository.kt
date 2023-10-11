@@ -3,7 +3,6 @@ package repo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import ru.lazyhat.models.*
 import source.NetworkSource
@@ -17,7 +16,7 @@ interface MainRepository {
     suspend fun createLesson(lesson: LessonCreate): Boolean
     suspend fun getStudentsByLesson(lessonId: UInt): Map<String, Set<Student>>
     suspend fun createToken(lessonId: UInt): LessonToken?
-    suspend fun getLessonAttendance(lessonId: UInt): Flow<LessonAttendance>
+    suspend fun getLessonAttendance(lessonId: UInt): LessonAttendance?
     suspend fun updateAttendance(update: RegistryRecordUpdate): Boolean
 }
 
